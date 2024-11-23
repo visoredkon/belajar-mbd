@@ -1,54 +1,44 @@
-import { db } from "./services/database"
 import express from "express"
+import cookieParser from "cookie-parser"
+
+import { jwt } from "./services/jwt";
+import { authRouter } from "./routers/auth";
+import { nonAuthRouter } from "./routers/non-auth";
 
 const app = express()
 
+// middleware untuk baca body (json)
 app.use(express.json())
 
-// http method: post
-// request: yang datang dari client
-// response: yang server berikan ke client
-// http://localhost:3000/register
-app.post('/register', (request, response) => {
-    const body = request.body
+// middleware untuk baca cookie
+app.use(cookieParser())
 
-    const data = [
-        body.name,
-        body.username,
-        body.password,
-        body.is_admin,
-    ]
+// Router No Auth
+app.use(nonAuthRouter)
 
-    db.query("call register(?, ?, ?, ?)", data, (err, _result) => {
-        if (err) {
-            const sqlErrorCode = err.sqlState
-            const clientErrors = [
-                "23000",
-                "45000"
-            ]
+// middleware check auth
+app.use((request, response, next) => {
+    const token = request.cookies.token
+    const payload = jwt.verify(token)
 
-            if (!clientErrors.includes(sqlErrorCode)) {
-                return response
-                    .status(500)
-                    .json({
-                        message: "Internal Server Error"
-                    })
-            }
-
-            return response
-                    .status(400)
-                    .json({
-                        message: err.message
-                    })
-        }
-
+    if (!payload) {
         response
-            .status(201)
+            .status(401)
             .json({
-                message: "Register akun berhasil"
+                message: "Unauthorized",
             })
-    })
+
+        return
+    }
+
+    // biar payload bisa dipanggil di endpoint lain
+    response.locals.payload = payload
+
+    next()
 })
+
+// Router Auth
+app.use(authRouter)
 
 app.listen(3000, () => {
     console.log("Server listening on port 3000")

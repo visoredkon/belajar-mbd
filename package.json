@@ -2,15 +2,18 @@
     "module": "src/app.ts",
     "type": "module",
     "scripts": {
-        "dev": "bun ."
+        "dev": "bun --watch ."
     },
     "dependencies": {
+        "cookie-parser": "^1.4.7",
         "express": "^4.21.1",
+        "jsonwebtoken": "^9.0.2",
         "mysql2": "^3.11.4"
     },
     "devDependencies": {
         "@types/bun": "^1.1.13",
-        "@types/express": "^5.0.0"
+        "@types/express": "^5.0.0",
+        "@types/jsonwebtoken": "^9.0.7"
     },
     "peerDependencies": {
         "typescript": "^5.7.2"
