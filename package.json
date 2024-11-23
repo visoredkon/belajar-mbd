@@ -1,0 +1,18 @@
+{
+    "module": "src/app.ts",
+    "type": "module",
+    "scripts": {
+        "dev": "bun ."
+    },
+    "dependencies": {
+        "express": "^4.21.1",
+        "mysql2": "^3.11.4"
+    },
+    "devDependencies": {
+        "@types/bun": "^1.1.13",
+        "@types/express": "^5.0.0"
+    },
+    "peerDependencies": {
+        "typescript": "^5.7.2"
+    }
+}
