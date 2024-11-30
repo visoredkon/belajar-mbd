@@ -1,8 +1,8 @@
 import express from "express"
 
-import { jwt } from "../../services/jwt";
-import { db } from "../../services/database"
-import { sqlClientErrors } from "../../utils/sqlClientErrors";
+import { jwt } from "@/services/jwt";
+import { db } from "@/services/database"
+import { sqlClientErrors } from "@/utils/sqlClientErrors";
 
 const router = express.Router()
 
@@ -17,7 +17,7 @@ router.post('/register', (request, response) => {
         body.name,
         body.username,
         body.password,
-        body.is_admin,
+        body.role,
     ]
 
     db.query("call register(?, ?, ?, ?)", data, (err, _result) => {
@@ -57,6 +57,7 @@ router.post("/login", (request, response) => {
 
     db.query("call login(?, ?)", data, (err, result) => {
         if (err) {
+            console.log(err)
             const sqlErrorCode = err.sqlState
 
             if (!sqlClientErrors.includes(sqlErrorCode)) {
@@ -88,7 +89,7 @@ router.post("/login", (request, response) => {
             .status(200)
             .json({
                 message: "Login berhasil",
-                data: queryResult
+                // data: queryResult
             })
     })
 })
