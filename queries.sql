@@ -1,4 +1,5 @@
-create or replace database garasi_ku;
+drop database if exists garasi_ku;
+create database garasi_ku;
 use garasi_ku;
 
 -- ----------------- Tables
@@ -7,7 +8,7 @@ create or replace table users (
     name varchar(255) not null,
     username varchar(255) unique not null,
     password varchar(255) not null,
-    is_admin boolean not null
+    role enum('user', 'admin', 'superadmin') not null
 );
 
 create or replace table garasi (
@@ -24,7 +25,7 @@ create or replace procedure register(
     in _name varchar(255),
     in _username varchar(255),
     in _password varchar(255),
-    in _is_admin boolean
+    in _role enum('user', 'admin', 'superadmin')
 )
 begin
     -- catch err
@@ -63,7 +64,7 @@ begin
         users.name = _name,
         users.username = _username,
         users.password = sha2(_password, 256),
-        users.is_admin = _is_admin;
+        users.role = _role;
 
     commit;
 end//
@@ -84,7 +85,7 @@ begin
 
     start transaction;
 
-    if (length(_username) <= 3) then
+    if (length(coalesce(_username, '')) < 3) then
         signal sqlstate
             '45000'
         set
@@ -116,7 +117,7 @@ begin
         id,
         name,
         username,
-        is_admin
+        role
     from
         users
     where
@@ -124,5 +125,156 @@ begin
 
     commit;
 end//
+delimiter ;
+
+create or replace view view_users
+    as
+select
+    id,
+    name,
+    username
+from
+    users;
+
+delimiter //
+create or replace procedure get_users()
+begin
+    -- catch err
+    declare exit handler for sqlexception
+    begin
+        rollback;
+        resignal;
+    end;
+
+    start transaction;
+
+    select
+        *
+    from
+        view_users;
+
+    commit;
+end //
+delimiter ;
+
+delimiter //
+create or replace procedure search_user_by_name(
+    in _name varchar(255)
+)
+begin
+    -- catch err
+    declare exit handler for sqlexception
+    begin
+        rollback;
+        resignal;
+    end;
+
+    start transaction;
+
+    select
+        id,
+        name,
+        username,
+        role
+    from
+        users
+    where
+        name like concat('%', _name, '%');
+
+    commit;
+end //
+delimiter ;
+
+delimiter //
+create or replace procedure search_user_by_username(
+    in _username varchar(255)
+)
+begin
+    -- catch err
+    declare exit handler for sqlexception
+    begin
+        rollback;
+        resignal;
+    end;
+
+    start transaction;
+
+    select
+        id,
+        name,
+        username,
+        role
+    from
+        users
+    where
+        username like concat('%', _username, '%');
+
+    commit;
+end //
+delimiter ;
+
+-- PUT
+delimiter //
+create or replace procedure edit_user(
+    in _id int,
+    in _name varchar(255),
+    in _username varchar(255),
+    in _password varchar(255),
+    in _role enum('user', 'admin', 'superadmin')
+)
+begin
+    -- catch err
+    declare exit handler for sqlexception
+    begin
+        rollback;
+        resignal;
+    end;
+
+    start transaction;
+
+    update
+        users
+    set
+        name = coalesce(_name, name),
+        username = coalesce(_username, username),
+        password = sha2(_password, 256),
+        role = coalesce(_role, role)
+    where
+        id = _id;
+
+    select
+        name,
+        username,
+        role
+    from
+        users
+    where
+        id = _id;
+
+    commit;
+end //
+delimiter ;
+
+delimiter //
+create or replace procedure delete_user(
+    in _id int
+)
+begin
+    -- catch err
+    declare exit handler for sqlexception
+    begin
+        rollback;
+        resignal;
+    end;
+
+    start transaction;
+
+    delete from
+        users
+    where
+        id = _id;
+
+    commit;
+end //
 delimiter ;
 -- ----------------- Procedures
